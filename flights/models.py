@@ -1,4 +1,9 @@
+import os
+import pathlib
+import uuid
+
 from django.db import models
+from django.utils.text import slugify
 
 
 class Country(models.Model):
@@ -108,10 +113,18 @@ class Crew(models.Model):
         ordering = ["last_name", "first_name"]
 
 
+def airline_image_path(airline: "Airline", filename: str) -> pathlib.Path:
+    _, ext = os.path.splitext(filename)
+    filename = f"{slugify(airline.name)}-{uuid.uuid4()}{ext}"
+    return pathlib.Path("upload/airlines") / pathlib.Path(filename)
+
+
 class Airline(models.Model):
     name = models.CharField(max_length=100)
     code = models.CharField(max_length=3, unique=True)
-    logo = models.ImageField(upload_to="airline_logos/", blank=True, null=True)
+    logo = models.ImageField(
+        upload_to=airline_image_path, blank=True, null=True
+    )
 
     def __str__(self):
         return f"{self.name} ({self.code})"
