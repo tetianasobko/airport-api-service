@@ -6,7 +6,11 @@ from flights.models import (
     Country,
     City,
     AirplaneType,
-    Airplane
+    Airplane,
+    Airline,
+    Flight,
+    CrewRole,
+    Crew
 )
 
 
@@ -55,11 +59,17 @@ class RouteListSerializer(serializers.ModelSerializer):
 
     def get_source_display(self, obj):
         airport = obj.source
-        return f"{airport.name} {airport.city.name}, {airport.city.country.name}"
+        return (
+            f"{airport.name} {airport.city.name}, "
+            f"{airport.city.country.name}"
+        )
 
     def get_destination_display(self, obj):
         airport = obj.destination
-        return f"{airport.name} {airport.city.name}, {airport.city.country.name}"
+        return (
+            f"{airport.name} {airport.city.name}, "
+            f"{airport.city.country.name}"
+        )
 
     class Meta:
         model = Route
@@ -109,4 +119,104 @@ class AirplaneDetailSerializer(AirplaneListSerializer):
         fields = [
             "id", "name", "rows", "seats_in_row", "airplane_type",
             "total_seats"
+        ]
+
+
+class AirlineSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Airline
+        fields = ["id", "name", "code", "logo"]
+
+
+class AirlineListSerializer(AirlineSerializer):
+    logo = serializers.ImageField(read_only=True)
+
+    class Meta:
+        model = Airline
+        fields = ["id", "name", "code", "logo"]
+
+
+class FlightSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Flight
+        fields = [
+            "id",
+            "route",
+            "airplane",
+            "airline",
+            "departure_time",
+            "arrival_time",
+            "status",
+            "crew"
+        ]
+
+
+class FlightListSerializer(FlightSerializer):
+    airline = AirlineListSerializer(read_only=True)
+    route = RouteListSerializer(read_only=True)
+    airplane_type = serializers.CharField(
+        source="airplane.airplane_type.name", read_only=True
+    )
+
+    class Meta:
+        model = Flight
+        fields = [
+            "id",
+            "route",
+            "airplane_type",
+            "airline",
+            "departure_time",
+            "arrival_time",
+            "status",
+        ]
+
+
+class AirlineDetailSerializer(AirlineListSerializer):
+    flights = FlightListSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Airline
+        fields = ["id", "name", "code", "logo", "flights"]
+
+
+class CrewRoleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CrewRole
+        fields = ["id", "name"]
+
+
+class CrewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Crew
+        fields = ["id", "first_name", "last_name", "role"]
+
+
+class CrewListSerializer(CrewSerializer):
+    role = serializers.CharField(source="role.name", read_only=True)
+
+
+class CrewDetailSerializer(CrewListSerializer):
+    flights = FlightListSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Crew
+        fields = ["id", "first_name", "last_name", "role", "flights"]
+
+
+class FlightDetailSerializer(FlightListSerializer):
+    route = RouteDetailSerializer(read_only=True)
+    airplane = AirplaneDetailSerializer(read_only=True)
+    crew = CrewListSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Flight
+        fields = [
+            "id",
+            "route",
+            "airplane",
+            "airline",
+            "departure_time",
+            "arrival_time",
+            "status",
+            "crew"
         ]
