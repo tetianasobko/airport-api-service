@@ -7,6 +7,10 @@ from flights.models import (
     Route,
     AirplaneType,
     Airplane,
+    CrewRole,
+    Crew,
+    Airline,
+    Flight
 )
 
 from flights.serializers import (
@@ -23,6 +27,16 @@ from flights.serializers import (
     AirplaneListSerializer,
     AirplaneSerializer,
     AirplaneDetailSerializer,
+    CrewRoleSerializer,
+    CrewSerializer,
+    CrewListSerializer,
+    CrewDetailSerializer,
+    AirlineSerializer,
+    AirlineListSerializer,
+    AirlineDetailSerializer,
+    FlightSerializer,
+    FlightListSerializer,
+    FlightDetailSerializer
 )
 
 
@@ -80,3 +94,44 @@ class AirplaneViewSet(viewsets.ModelViewSet):
         elif self.action == "retrieve":
             return AirplaneDetailSerializer
         return AirplaneSerializer
+
+
+class CrewRoleViewSet(viewsets.ModelViewSet):
+    queryset = CrewRole.objects.all()
+    serializer_class = CrewRoleSerializer
+
+
+class CrewViewSet(viewsets.ModelViewSet):
+    queryset = Crew.objects.all()
+    serializer_class = CrewSerializer
+
+    def get_serializer_class(self):
+        if self.action == "list":
+            return CrewListSerializer
+        elif self.action == "retrieve":
+            return CrewDetailSerializer
+        return CrewSerializer
+
+
+class AirlineViewSet(viewsets.ModelViewSet):
+    queryset = Airline.objects.all()
+    serializer_class = AirlineSerializer
+
+    def get_serializer_class(self):
+        if self.action == "list":
+            return AirlineListSerializer
+        elif self.action == "retrieve":
+            return AirlineDetailSerializer
+        return AirlineSerializer
+
+
+class FlightViewSet(viewsets.ModelViewSet):
+    queryset = Flight.objects.all()
+    serializer_class = FlightSerializer
+
+    def get_serializer_class(self):
+        if self.action in "list":
+            return FlightListSerializer
+        elif self.action == "retrieve":
+            return FlightDetailSerializer
+        return FlightSerializer
