@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'drf_spectacular',
     'flights',
     'bookings',
     'user',
@@ -71,6 +72,10 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'airport_service.wsgi.application'
+
+REST_FRAMEWORK = {
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+}
 
 
 # Database
