@@ -1,3 +1,9 @@
-from django.shortcuts import render
+from rest_framework import viewsets
 
-# Create your views here.
+from bookings.models import SeatClass
+from bookings.serializers import SeatClassSerializer
+
+
+class SeatClassViewSet(viewsets.ModelViewSet):
+    serializer_class = SeatClassSerializer
+    queryset = SeatClass.objects.all()
