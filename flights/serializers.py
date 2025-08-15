@@ -29,7 +29,7 @@ class CitySerializer(serializers.ModelSerializer):
 
 
 class CityListSerializer(CitySerializer):
-    country = serializers.SlugRelatedField(slug_field="name", read_only=True)
+    country = CountrySerializer(read_only=True)
 
 
 class AirportSerializer(serializers.ModelSerializer):
@@ -39,14 +39,11 @@ class AirportSerializer(serializers.ModelSerializer):
 
 
 class AirportListSerializer(AirportSerializer):
-    city_country = serializers.SerializerMethodField()
-
-    def get_city_country(self, obj):
-        return f"{obj.city.name}, {obj.city.country.name}"
+    city = CityListSerializer(read_only=True)
 
     class Meta:
         model = Airport
-        fields = ["id", "name", "code", "city_country"]
+        fields = ["id", "name", "code", "city"]
 
 
 class RouteSerializer(serializers.ModelSerializer):
@@ -84,13 +81,13 @@ class RouteDetailSerializer(RouteSerializer):
 
 
 class AirportDetailSerializer(AirportListSerializer):
+    city = CityListSerializer(read_only=True)
     source_routes = RouteListSerializer(many=True, read_only=True)
     destination_routes = RouteListSerializer(many=True, read_only=True)
 
     class Meta:
         model = Airport
-        fields = ["id", "name", "code", "city_country", "source_routes",
-                  "destination_routes"]
+        fields = ["id", "name", "code", "city", "source_routes", "destination_routes"]
 
 
 class AirplaneTypeSerializer(serializers.ModelSerializer):

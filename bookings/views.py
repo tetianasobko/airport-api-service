@@ -5,13 +5,18 @@ from bookings.serializers import OrderSerializer, OrderListSerializer
 
 
 class OrderViewSet(viewsets.ModelViewSet):
-    queryset = Order.objects.all()
+    queryset = Order.objects.prefetch_related(
+        "tickets__flight__route__source",
+        "tickets__flight__route__destination",
+        "tickets__seat_class"
+    )
     serializer_class = OrderSerializer
 
     def get_queryset(self):
         user = self.request.user
         if user.is_authenticated:
             return self.queryset.filter(user=user)
+
         return self.queryset.none()
 
     def get_serializer_class(self):
