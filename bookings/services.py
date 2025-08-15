@@ -6,7 +6,7 @@ from flights.models import Flight, SeatClass
 
 
 class TicketPricingService:
-    PRICE_PER_KILOMETER = 0.015
+    PRICE_PER_KILOMETER = 0.035
 
     def __init__(self, flight: Flight, seat_class: SeatClass):
         self.flight = flight
@@ -64,9 +64,12 @@ class TicketPricingService:
 
     def _get_time_multiplier(self) -> float:
         days_to_departure = (self.flight.departure_time - timezone.now()).days
-        if days_to_departure < 7: return 2.0
-        if days_to_departure < 30: return 1.5
-        if days_to_departure < 90: return 1.2
+        if days_to_departure < 7:
+            return 2.0
+        if days_to_departure < 30:
+            return 1.5
+        if days_to_departure < 90:
+            return 1.2
         return 1.0
 
     def _get_occupancy_multiplier(self) -> float:
@@ -79,9 +82,13 @@ class TicketPricingService:
             seat_class=self.seat_class
         ).count()
 
-        if capacity == 0: return 1.0
+        if capacity == 0:
+            return 1.0
         occupancy_rate = tickets_sold / capacity
-        if occupancy_rate > 0.9: return 1.8
-        if occupancy_rate > 0.7: return 1.4
-        if occupancy_rate > 0.5: return 1.1
+        if occupancy_rate > 0.9:
+            return 1.8
+        if occupancy_rate > 0.7:
+            return 1.4
+        if occupancy_rate > 0.5:
+            return 1.1
         return 1.0
