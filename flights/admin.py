@@ -10,7 +10,9 @@ from flights.models import (
     CrewRole,
     Crew,
     Airline,
-    Flight
+    Flight,
+    Compartment,
+    SeatClass
 )
 
 
@@ -29,11 +31,17 @@ class RouteAdmin(admin.ModelAdmin):
     ordering = ("source__name", "destination__name")
 
 
+class CompartmentInline(admin.TabularInline):
+    model = Compartment
+    extra = 1
+
+
 @admin.register(Airplane)
 class AirplaneAdmin(admin.ModelAdmin):
-    list_display = ("name", "rows", "seats_in_row", "airplane_type")
+    list_display = ("name", "airplane_type")
     search_fields = ("name", "airplane_type__name")
     list_filter = ("airplane_type",)
+    inlines = [CompartmentInline]
 
 
 @admin.register(Crew)
@@ -65,4 +73,5 @@ class FlightAdmin(admin.ModelAdmin):
 admin.site.register(Country)
 admin.site.register(City)
 admin.site.register(AirplaneType)
+admin.site.register(SeatClass)
 admin.site.register(CrewRole)

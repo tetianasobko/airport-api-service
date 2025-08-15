@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from bookings.models import Order, Ticket, SeatClass
+from bookings.models import Order, Ticket
 
 
 @admin.register(Order)
@@ -31,6 +31,3 @@ class TicketAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         queryset = super().get_queryset(request)
         return queryset.select_related("flight", "seat_class", "order")
-
-
-admin.site.register(SeatClass)
