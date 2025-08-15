@@ -1,3 +1,4 @@
+from django.db import transaction
 from rest_framework import serializers
 from rest_framework.relations import SlugRelatedField
 
@@ -138,11 +139,12 @@ class AirplaneSerializer(serializers.ModelSerializer):
         ]
 
     def create(self, validated_data):
-        compartments = validated_data.pop("compartments")
-        airplane = Airplane.objects.create(**validated_data)
-        for compartment_data in compartments:
-            Compartment.objects.create(airplane=airplane, **compartment_data)
-        return airplane
+        with transaction.atomic():
+            compartments = validated_data.pop("compartments")
+            airplane = Airplane.objects.create(**validated_data)
+            for compartment_data in compartments:
+                Compartment.objects.create(airplane=airplane, **compartment_data)
+            return airplane
 
 
 class AirplaneListSerializer(serializers.ModelSerializer):
