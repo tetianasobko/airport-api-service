@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from rest_framework.relations import SlugRelatedField
 
 from flights.models import (
     Airport,
@@ -10,7 +11,7 @@ from flights.models import (
     Airline,
     Flight,
     CrewRole,
-    Crew
+    Crew, Compartment, SeatClass
 )
 
 
@@ -97,10 +98,50 @@ class AirplaneTypeSerializer(serializers.ModelSerializer):
         fields = ["id", "name"]
 
 
+class SeatClassSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SeatClass
+        fields = (
+            "id",
+            "name",
+        )
+
+
+class CompartmentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Compartment
+        fields = [
+            "id",
+            "seat_class",
+            "start_row",
+            "end_row",
+            "seats_in_row",
+            "capacity"
+        ]
+
+
+class CompartmentListSerializer(CompartmentSerializer):
+    seat_class = SlugRelatedField(slug_field="name", read_only=True)
+
+
 class AirplaneSerializer(serializers.ModelSerializer):
+    compartments = CompartmentSerializer(many=True, read_only=False)
+
     class Meta:
         model = Airplane
-        fields = ["id", "name", "rows", "seats_in_row", "airplane_type"]
+        fields = [
+            "id",
+            "name",
+            "airplane_type",
+            "compartments"
+        ]
+
+    def create(self, validated_data):
+        compartments = validated_data.pop("compartments")
+        airplane = Airplane.objects.create(**validated_data)
+        for compartment_data in compartments:
+            Compartment.objects.create(airplane=airplane, **compartment_data)
+        return airplane
 
 
 class AirplaneListSerializer(serializers.ModelSerializer):
@@ -114,11 +155,16 @@ class AirplaneListSerializer(serializers.ModelSerializer):
 
 
 class AirplaneDetailSerializer(AirplaneListSerializer):
+    compartments = CompartmentListSerializer(many=True, read_only=True)
+
     class Meta:
         model = Airplane
         fields = [
-            "id", "name", "rows", "seats_in_row", "airplane_type",
-            "total_seats"
+            "id",
+            "name",
+            "airplane_type",
+            "total_seats",
+            "compartments"
         ]
 
 

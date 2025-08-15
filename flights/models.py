@@ -20,7 +20,9 @@ class Country(models.Model):
 
 class City(models.Model):
     name = models.CharField(max_length=100)
-    country = models.ForeignKey(Country, on_delete=models.CASCADE)
+    country = models.ForeignKey(
+        Country, on_delete=models.CASCADE, related_name="cities"
+    )
 
     def __str__(self):
         return f"{self.name}, {self.country.name}"
@@ -32,7 +34,9 @@ class City(models.Model):
 
 class Airport(models.Model):
     name = models.CharField(max_length=100)
-    city = models.ForeignKey(City, on_delete=models.CASCADE)
+    city = models.ForeignKey(
+        City, on_delete=models.CASCADE, related_name="airports"
+    )
     code = models.CharField(max_length=3, unique=True)
 
     def __str__(self):
@@ -74,19 +78,64 @@ class AirplaneType(models.Model):
 
 class Airplane(models.Model):
     name = models.CharField(max_length=100)
-    rows = models.PositiveIntegerField()
-    seats_in_row = models.PositiveIntegerField()
-    airplane_type = models.ForeignKey(AirplaneType, on_delete=models.CASCADE)
+    airplane_type = models.ForeignKey(
+        AirplaneType, on_delete=models.CASCADE, related_name="airplanes"
+    )
 
     @property
     def total_seats(self):
-        return self.rows * self.seats_in_row
+        return sum(
+            compartment.capacity for compartment in self.compartments.all()
+        )
 
     def __str__(self):
         return f"{self.name} - {self.airplane_type.name}"
 
     class Meta:
         ordering = ["name"]
+
+
+class SeatClass(models.Model):
+    name = models.CharField(max_length=50, unique=True)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name_plural = "Seat Classes"
+        ordering = ["name"]
+
+
+class Compartment(models.Model):
+    airplane = models.ForeignKey(
+        Airplane, on_delete=models.CASCADE, related_name="compartments"
+    )
+    seat_class = models.ForeignKey(
+        SeatClass, on_delete=models.CASCADE, related_name="compartments"
+    )
+    start_row = models.PositiveIntegerField()
+    end_row = models.PositiveIntegerField()
+    seats_in_row = models.CharField(
+        max_length=10,
+        help_text="Enter the seat letters for this compartment, e.g., 'ABCDEF'"
+    )
+
+    @property
+    def capacity(self):
+        if self.end_row < self.start_row:
+            return 0
+        num_rows = (self.end_row - self.start_row) + 1
+        num_seats_per_row = len(self.seats_in_row)
+        return num_rows * num_seats_per_row
+
+    def __str__(self):
+        return (
+            f"{self.seat_class.name} (Rows {self.start_row}-{self.end_row}) "
+            f"on {self.airplane.name}"
+        )
+
+    class Meta:
+        ordering = ["airplane__name", "seat_class__name"]
 
 
 class CrewRole(models.Model):
@@ -144,9 +193,15 @@ class Flight(models.Model):
         ("diverted", "Diverted"),
     ]
 
-    route = models.ForeignKey(Route, on_delete=models.CASCADE)
-    airplane = models.ForeignKey(Airplane, on_delete=models.CASCADE)
-    airline = models.ForeignKey(Airline, on_delete=models.CASCADE)
+    route = models.ForeignKey(
+        Route, on_delete=models.CASCADE, related_name="flights"
+    )
+    airplane = models.ForeignKey(
+        Airplane, on_delete=models.CASCADE, related_name="flights"
+    )
+    airline = models.ForeignKey(
+        Airline, on_delete=models.CASCADE, related_name="flights"
+    )
     departure_time = models.DateTimeField()
     arrival_time = models.DateTimeField()
     status = models.CharField(

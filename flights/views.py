@@ -10,7 +10,8 @@ from flights.models import (
     CrewRole,
     Crew,
     Airline,
-    Flight
+    Flight,
+    SeatClass
 )
 
 from flights.serializers import (
@@ -36,7 +37,8 @@ from flights.serializers import (
     AirlineDetailSerializer,
     FlightSerializer,
     FlightListSerializer,
-    FlightDetailSerializer
+    FlightDetailSerializer,
+    SeatClassSerializer
 )
 
 
@@ -82,6 +84,11 @@ class RouteViewSet(viewsets.ModelViewSet):
 class AirplaneTypeViewSet(viewsets.ModelViewSet):
     queryset = AirplaneType.objects.all()
     serializer_class = AirplaneTypeSerializer
+
+
+class SeatClassViewSet(viewsets.ModelViewSet):
+    queryset = SeatClass.objects.all()
+    serializer_class = SeatClassSerializer
 
 
 class AirplaneViewSet(viewsets.ModelViewSet):
