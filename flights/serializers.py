@@ -104,6 +104,7 @@ class SeatClassSerializer(serializers.ModelSerializer):
         fields = (
             "id",
             "name",
+            "price_multiplier",
         )
 
 
