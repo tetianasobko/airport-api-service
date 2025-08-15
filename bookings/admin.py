@@ -3,6 +3,12 @@ from django.contrib import admin
 from bookings.models import Order, Ticket
 
 
+class TicketInline(admin.TabularInline):
+    model = Ticket
+    readonly_fields = ("price",)
+    extra = 1
+
+
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
     list_display = ("id", "user", "created_at")
@@ -12,11 +18,13 @@ class OrderAdmin(admin.ModelAdmin):
     date_hierarchy = "created_at"
     readonly_fields = ("created_at",)
 
+    inlines = [TicketInline]
+
 
 @admin.register(Ticket)
 class TicketAdmin(admin.ModelAdmin):
     list_display = (
-        "id", "row", "seat", "flight", "seat_class", "price", "order"
+        "id", "row", "seat", "flight", "seat_class", "price"
     )
     search_fields = (
         "flight__airline__name",
@@ -30,4 +38,4 @@ class TicketAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request):
         queryset = super().get_queryset(request)
-        return queryset.select_related("flight", "seat_class", "order")
+        return queryset.select_related("flight", "seat_class", "order__user")

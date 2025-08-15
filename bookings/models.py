@@ -19,11 +19,13 @@ class Order(models.Model):
 
 class Ticket(models.Model):
     row = models.PositiveIntegerField()
-    seat = models.PositiveIntegerField()
+    seat = models.CharField(max_length=1)
     flight = models.ForeignKey(Flight, on_delete=models.CASCADE)
     seat_class = models.ForeignKey(SeatClass, on_delete=models.CASCADE)
     price = models.DecimalField(max_digits=10, decimal_places=2)
-    order = models.ForeignKey(Order, on_delete=models.CASCADE)
+    order = models.ForeignKey(
+        Order, on_delete=models.CASCADE, related_name="tickets"
+    )
 
     def __str__(self):
         return (
