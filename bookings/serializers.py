@@ -3,12 +3,14 @@ from rest_framework import serializers
 
 from bookings.models import Ticket, Order
 from bookings.services import TicketPricingService
-from flights.serializers import FlightListSerializer, SeatClassSerializer
+from flights.serializers import (
+    FlightListSerializer,
+    SeatClassSerializer,
+    TicketSeatClassSerializer
+)
 
 
 class TicketSerializer(serializers.ModelSerializer):
-    with_luggage = serializers.BooleanField(default=False)
-
     class Meta:
         model = Ticket
         fields = (
@@ -40,7 +42,7 @@ class TicketListSerializer(serializers.ModelSerializer):
 
 class TicketDetailSerializer(TicketSerializer):
     flight = FlightListSerializer(many=False, read_only=True)
-    seat_class = SeatClassSerializer(many=False, read_only=True)
+    seat_class = TicketSeatClassSerializer(many=False, read_only=True)
 
 
 class OrderSerializer(serializers.ModelSerializer):
@@ -72,3 +74,12 @@ class OrderSerializer(serializers.ModelSerializer):
 
 class OrderListSerializer(OrderSerializer):
     tickets = TicketListSerializer(many=True, read_only=True)
+
+
+class OrderDetailSerializer(OrderSerializer):
+    tickets = TicketDetailSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Order
+        fields = ("id", "tickets", "created_at")
+        read_only_fields = ("id", "created_at")
