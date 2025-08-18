@@ -1,6 +1,3 @@
-import pprint
-
-from django.db import connection
 from rest_framework import viewsets
 
 from flights.models import (
