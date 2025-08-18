@@ -1,6 +1,6 @@
 from django.db import models
 
-from flights.models import Flight, SeatClass
+from flights.models import Flight, SeatClass, Compartment
 
 
 class Order(models.Model):
@@ -22,6 +22,7 @@ class Ticket(models.Model):
     seat = models.CharField(max_length=1)
     flight = models.ForeignKey(Flight, on_delete=models.CASCADE)
     seat_class = models.ForeignKey(SeatClass, on_delete=models.CASCADE)
+    with_luggage = models.BooleanField(default=False)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     order = models.ForeignKey(
         Order, on_delete=models.CASCADE, related_name="tickets"

@@ -115,6 +115,15 @@ class SeatClassSerializer(serializers.ModelSerializer):
             "price_multiplier",
         )
 
+class TicketSeatClassSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SeatClass
+        fields = (
+            "id",
+            "name",
+        )
+        read_only_fields = ("id", "name")
+
 
 class CompartmentSerializer(serializers.ModelSerializer):
     class Meta:

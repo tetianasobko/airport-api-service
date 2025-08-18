@@ -1,7 +1,11 @@
 from rest_framework import viewsets
 
 from bookings.models import Order
-from bookings.serializers import OrderSerializer, OrderListSerializer
+from bookings.serializers import (
+    OrderSerializer,
+    OrderListSerializer,
+    OrderDetailSerializer
+)
 
 
 class OrderViewSet(viewsets.ModelViewSet):
@@ -20,8 +24,10 @@ class OrderViewSet(viewsets.ModelViewSet):
         return self.queryset.none()
 
     def get_serializer_class(self):
-        if self.action in ("list", "retrieve"):
+        if self.action == "list":
             return OrderListSerializer
+        elif self.action == "retrieve":
+            return OrderDetailSerializer
         return OrderSerializer
 
     def perform_create(self, serializer):
