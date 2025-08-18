@@ -1,8 +1,11 @@
 import os
 import pathlib
 import uuid
+from datetime import datetime
 
 from django.db import models
+from django.db.models import QuerySet
+from django.utils import timezone
 from django.utils.text import slugify
 
 
@@ -63,6 +66,35 @@ class Route(models.Model):
 
     class Meta:
         ordering = ["source__name", "destination__name"]
+
+    @staticmethod
+    def validate_different_airports(
+            source: Airport, destination: Airport, error_to_raise
+    ):
+        if source == destination:
+            raise error_to_raise(
+                {
+                    "destination": "Source and destination airports "
+                                   "must be different."
+                }
+            )
+
+    def clean(self):
+        Route.validate_different_airports(
+            self.source, self.destination, ValueError
+        )
+
+    def save(
+        self,
+        force_insert=False,
+        force_update=False,
+        using=None,
+        update_fields=None,
+    ):
+        self.full_clean()
+        return super(Route, self).save(
+            force_insert, force_update, using, update_fields
+        )
 
 
 class AirplaneType(models.Model):
@@ -188,7 +220,7 @@ class Airline(models.Model):
 class Flight(models.Model):
     FLIGHT_STATUS_CHOICES = [
         ("scheduled", "Scheduled"),
-        ("on Time", "On Time"),
+        ("on time", "On Time"),
         ("delayed", "Delayed"),
         ("departed", "Departed"),
         ("arrived", "Arrived"),
@@ -220,3 +252,125 @@ class Flight(models.Model):
 
     class Meta:
         ordering = ["departure_time"]
+
+    @staticmethod
+    def validate_time(
+            status: str,
+            arrival_time: datetime,
+            departure_time: datetime,
+            error_to_raise
+    ):
+        if status == "cancelled":
+            return
+
+        if arrival_time <= departure_time:
+            raise error_to_raise(
+                {"arrival_time": "Arrival time must be after departure time."}
+            )
+
+        if arrival_time <= timezone.now():
+            raise error_to_raise(
+                {"arrival_time": "Arrival time must be in the future."}
+            )
+
+        if departure_time <= timezone.now():
+            raise error_to_raise(
+                {"departure_time": "Departure time must be in the future."}
+            )
+
+    @staticmethod
+    def validate_airplane_availability(
+            airplane: Airplane,
+            arrival_time: datetime,
+            departure_time: datetime,
+            status: str,
+            error_to_raise,
+            flight_id: int | None = None
+    ):
+        if status == "cancelled":
+            return
+
+        overlapping_flights = Flight.objects.filter(
+                models.Q(departure_time__lt=arrival_time)
+                & models.Q(arrival_time__gt=departure_time)
+                & models.Q(airplane=airplane)
+        ).exclude(status="cancelled")
+
+        if flight_id is not None:
+            overlapping_flights = overlapping_flights.exclude(pk=flight_id)
+
+        if overlapping_flights.exists():
+            raise error_to_raise(
+                {
+                    "airplane": "The airplane is already scheduled "
+                                "for another flight."
+                }
+            )
+
+    @staticmethod
+    def validate_crew_availability(
+            crew_members: QuerySet[Crew],
+            arrival_time: datetime,
+            departure_time: datetime,
+            status: str,
+            error_to_raise,
+            flight_id: int | None = None
+    ):
+        if status == "cancelled":
+            return
+
+        for crew_member in crew_members:
+            overlapping_flights = Flight.objects.filter(
+                models.Q(departure_time__lt=arrival_time)
+                & models.Q(arrival_time__gt=departure_time)
+                & models.Q(crew=crew_member)
+            ).exclude(status="cancelled")
+
+            if flight_id is not None:
+                overlapping_flights = overlapping_flights.exclude(pk=flight_id)
+
+            if overlapping_flights.exists():
+                raise error_to_raise(
+                    {
+                        "crew": f"{crew_member} is already scheduled "
+                                f"for another flight."
+                    }
+                )
+
+    def clean(self):
+        Flight.validate_time(
+            status=self.status,
+            arrival_time=self.arrival_time,
+            departure_time=self.departure_time,
+            error_to_raise=ValueError
+        )
+
+        if self.pk:
+            Flight.validate_airplane_availability(
+                airplane=self.airplane,
+                arrival_time=self.arrival_time,
+                departure_time=self.departure_time,
+                status=self.status,
+                flight_id=self.pk,
+                error_to_raise=ValueError
+            )
+            Flight.validate_crew_availability(
+                crew_members=self.crew.all(),
+                arrival_time=self.arrival_time,
+                departure_time=self.departure_time,
+                status=self.status,
+                flight_id=self.pk,
+                error_to_raise=ValueError
+            )
+
+    def save(
+        self,
+        force_insert=False,
+        force_update=False,
+        using=None,
+        update_fields=None,
+    ):
+        self.full_clean()
+        return super(Flight, self).save(
+            force_insert, force_update, using, update_fields
+        )

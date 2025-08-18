@@ -51,6 +51,15 @@ class RouteSerializer(serializers.ModelSerializer):
         model = Route
         fields = ["id", "source", "destination", "distance"]
 
+    def validate(self, attrs):
+        data = super(RouteSerializer, self).validate(attrs)
+
+        Route.validate_different_airports(
+            attrs["source"], attrs["destination"], serializers.ValidationError
+        )
+
+        return data
+
 
 class RouteListSerializer(serializers.ModelSerializer):
     source_display = serializers.SerializerMethodField()
@@ -87,7 +96,8 @@ class AirportDetailSerializer(AirportListSerializer):
 
     class Meta:
         model = Airport
-        fields = ["id", "name", "code", "city", "source_routes", "destination_routes"]
+        fields = ["id", "name", "code", "city", "source_routes",
+                  "destination_routes"]
 
 
 class AirplaneTypeSerializer(serializers.ModelSerializer):
@@ -140,7 +150,8 @@ class AirplaneSerializer(serializers.ModelSerializer):
             compartments = validated_data.pop("compartments")
             airplane = Airplane.objects.create(**validated_data)
             for compartment_data in compartments:
-                Compartment.objects.create(airplane=airplane, **compartment_data)
+                Compartment.objects.create(airplane=airplane,
+                                           **compartment_data)
             return airplane
 
 
@@ -195,6 +206,41 @@ class FlightSerializer(serializers.ModelSerializer):
             "status",
             "crew"
         ]
+
+    def validate(self, attrs):
+        data = super(FlightSerializer, self).validate(attrs)
+
+        arrival_time = attrs.get("arrival_time")
+        departure_time = attrs.get("departure_time")
+
+        flight_id = self.instance.pk if self.instance else None
+
+        Flight.validate_time(
+            status=attrs.get("status"),
+            arrival_time=arrival_time,
+            departure_time=departure_time,
+            error_to_raise=serializers.ValidationError
+        )
+
+        Flight.validate_airplane_availability(
+            airplane=attrs.get("airplane"),
+            arrival_time=arrival_time,
+            departure_time=departure_time,
+            status=attrs.get("status"),
+            flight_id=flight_id,
+            error_to_raise=serializers.ValidationError
+        )
+
+        Flight.validate_crew_availability(
+            crew_members=attrs.get("crew", []),
+            arrival_time=arrival_time,
+            departure_time=departure_time,
+            status=attrs.get("status"),
+            flight_id=flight_id,
+            error_to_raise=serializers.ValidationError
+        )
+
+        return data
 
 
 class FlightListSerializer(FlightSerializer):
