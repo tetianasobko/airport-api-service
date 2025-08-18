@@ -24,6 +24,28 @@ class TicketSerializer(serializers.ModelSerializer):
         )
         read_only_fields = ("id", "price")
 
+    def validate(self, attrs):
+        data = super(TicketSerializer, self).validate(attrs=attrs)
+        flight = attrs.get("flight")
+        seat_class = attrs.get("seat_class")
+        row = attrs.get("row")
+        seat = attrs.get("seat")
+
+        Ticket.validate_seat(
+            row=row,
+            seat=seat,
+            flight=flight,
+            seat_class=seat_class,
+            error_to_raise=serializers.ValidationError
+        )
+
+        Ticket.validate_flight(
+            flight=flight,
+            error_to_raise=serializers.ValidationError
+        )
+
+        return data
+
 
 class TicketListSerializer(serializers.ModelSerializer):
     route = serializers.CharField(source="flight.route", read_only=True)
