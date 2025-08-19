@@ -21,7 +21,9 @@ class Order(models.Model):
 class Ticket(models.Model):
     row = models.PositiveIntegerField()
     seat = models.CharField(max_length=1)
-    flight = models.ForeignKey(Flight, on_delete=models.CASCADE)
+    flight = models.ForeignKey(
+        Flight, on_delete=models.CASCADE, related_name="tickets"
+    )
     seat_class = models.ForeignKey(SeatClass, on_delete=models.CASCADE)
     with_luggage = models.BooleanField(default=False)
     price = models.DecimalField(max_digits=10, decimal_places=2)

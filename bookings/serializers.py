@@ -67,6 +67,15 @@ class TicketDetailSerializer(TicketSerializer):
     seat_class = TicketSeatClassSerializer(many=False, read_only=True)
 
 
+class TicketSeatSerializer(serializers.ModelSerializer):
+    seat_class = TicketSeatClassSerializer(many=False, read_only=True)
+
+    class Meta:
+        model = Ticket
+        fields = ("id", "row", "seat", "seat_class")
+        read_only_fields = ("id", "row", "seat", "seat_class")
+
+
 class OrderSerializer(serializers.ModelSerializer):
     tickets = TicketSerializer(many=True, read_only=False, allow_empty=False)
 
