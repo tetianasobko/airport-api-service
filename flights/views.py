@@ -199,6 +199,32 @@ class FlightViewSet(viewsets.ModelViewSet):
             ).annotate(
                 tickets_available=F("total_seats") - F("tickets_taken")
             )
+
+            airline_id = self.request.query_params.get("airline")
+            if airline_id:
+                queryset = queryset.filter(airline_id=airline_id)
+
+            route_id = self.request.query_params.get("route")
+            if route_id:
+                queryset = queryset.filter(route_id=route_id)
+
+            # Filter by source airport
+            source = self.request.query_params.get("source")
+            if source:
+                queryset = queryset.filter(route__source_id=source)
+
+            destination = self.request.query_params.get("destination")
+            if destination:
+                queryset = queryset.filter(route__destination_id=destination)
+
+            departure_date = self.request.query_params.get("departure_date")
+            if departure_date:
+                queryset = queryset.filter(departure_time__date=departure_date)
+
+            arrival_date = self.request.query_params.get("arrival_date")
+            if arrival_date:
+                queryset = queryset.filter(arrival_time__date=arrival_date)
+
         if self.action == "retrieve":
             queryset = queryset.prefetch_related(
                 "crew__role", "airplane__compartments__seat_class"
