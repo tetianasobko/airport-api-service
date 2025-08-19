@@ -12,7 +12,9 @@ from flights.models import (
     Airline,
     Flight,
     CrewRole,
-    Crew, Compartment, SeatClass
+    Crew,
+    Compartment,
+    SeatClass
 )
 
 
@@ -114,6 +116,7 @@ class SeatClassSerializer(serializers.ModelSerializer):
             "name",
             "price_multiplier",
         )
+
 
 class TicketSeatClassSerializer(serializers.ModelSerializer):
     class Meta:
@@ -308,6 +311,12 @@ class FlightDetailSerializer(FlightListSerializer):
     route = RouteDetailSerializer(read_only=True)
     airplane = AirplaneDetailSerializer(read_only=True)
     crew = CrewListSerializer(many=True, read_only=True)
+    taken_seats = serializers.SerializerMethodField()
+
+    def get_taken_seats(self, obj):
+        from bookings.serializers import TicketSeatSerializer
+        tickets = obj.tickets.all()
+        return TicketSeatSerializer(tickets, many=True).data
 
     class Meta:
         model = Flight
@@ -319,5 +328,6 @@ class FlightDetailSerializer(FlightListSerializer):
             "departure_time",
             "arrival_time",
             "status",
-            "crew"
+            "crew",
+            "taken_seats",
         ]
