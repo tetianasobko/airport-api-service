@@ -78,7 +78,7 @@ class TicketPricingService:
         )
         capacity = compartment.capacity
 
-        tickets_sold = self.flight.ticket_set.filter(
+        tickets_sold = self.flight.tickets.filter(
             seat_class=self.seat_class
         ).count()
 

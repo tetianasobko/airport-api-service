@@ -1,3 +1,5 @@
+from django.db.models import Count, F, Sum
+from django.db.models.functions import Length
 from rest_framework import viewsets
 
 from flights.models import (
@@ -183,6 +185,20 @@ class FlightViewSet(viewsets.ModelViewSet):
             "airline"
         )
 
+        if self.action == "list":
+            queryset = queryset.annotate(
+                total_seats=Sum(
+                    (
+                            F("airplane__compartments__end_row")
+                            - F("airplane__compartments__start_row") + 1
+                    )
+                    * Length(F("airplane__compartments__seats_in_row")),
+                    distinct=True
+                ),
+                tickets_taken=Count("tickets", distinct=True)
+            ).annotate(
+                tickets_available=F("total_seats") - F("tickets_taken")
+            )
         if self.action == "retrieve":
             queryset = queryset.prefetch_related(
                 "crew__role", "airplane__compartments__seat_class"
