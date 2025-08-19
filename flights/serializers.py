@@ -261,6 +261,7 @@ class FlightListSerializer(FlightSerializer):
     airplane_type = serializers.CharField(
         source="airplane.airplane_type.name", read_only=True
     )
+    tickets_available = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Flight
@@ -272,6 +273,7 @@ class FlightListSerializer(FlightSerializer):
             "departure_time",
             "arrival_time",
             "status",
+            "tickets_available",
         ]
 
 
