@@ -5,7 +5,6 @@ from bookings.models import Ticket, Order
 from bookings.services import TicketPricingService
 from flights.serializers import (
     FlightListSerializer,
-    SeatClassSerializer,
     TicketSeatClassSerializer
 )
 
@@ -49,7 +48,7 @@ class TicketSerializer(serializers.ModelSerializer):
 
 class TicketListSerializer(serializers.ModelSerializer):
     route = serializers.CharField(source="flight.route", read_only=True)
-    seat_class = SeatClassSerializer(many=False, read_only=True)
+    seat_class = TicketSeatClassSerializer(many=False, read_only=True)
 
     class Meta:
         model = Ticket
