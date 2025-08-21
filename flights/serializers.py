@@ -220,39 +220,61 @@ class FlightSerializer(serializers.ModelSerializer):
         ]
 
     def validate(self, attrs):
-        data = super(FlightSerializer, self).validate(attrs)
+        is_update = self.instance is not None
 
-        arrival_time = attrs.get("arrival_time")
-        departure_time = attrs.get("departure_time")
-
-        flight_id = self.instance.pk if self.instance else None
-
-        Flight.validate_time(
-            status=attrs.get("status"),
-            arrival_time=arrival_time,
-            departure_time=departure_time,
-            error_to_raise=serializers.ValidationError
+        departure_time = attrs.get(
+            "departure_time",
+            self.instance.departure_time if is_update else None
         )
-
-        Flight.validate_airplane_availability(
-            airplane=attrs.get("airplane"),
-            arrival_time=arrival_time,
-            departure_time=departure_time,
-            status=attrs.get("status"),
-            flight_id=flight_id,
-            error_to_raise=serializers.ValidationError
+        arrival_time = attrs.get(
+            "arrival_time",
+            self.instance.arrival_time if is_update else None
         )
-
-        Flight.validate_crew_availability(
-            crew_members=attrs.get("crew", []),
-            arrival_time=arrival_time,
-            departure_time=departure_time,
-            status=attrs.get("status"),
-            flight_id=flight_id,
-            error_to_raise=serializers.ValidationError
+        status = attrs.get(
+            "status",
+            self.instance.status if is_update else None
         )
+        airplane = attrs.get(
+            "airplane",
+            self.instance.airplane if is_update else None
+        )
+        flight_id = self.instance.pk if is_update else None
 
-        return data
+        crew_members = attrs.get("crew")
+        if is_update and crew_members is None:
+            crew_members = self.instance.crew.all()
+        elif not is_update:
+            crew_members = attrs.get("crew", [])
+
+        if departure_time and arrival_time:
+            Flight.validate_time(
+                status=status,
+                arrival_time=arrival_time,
+                departure_time=departure_time,
+                error_to_raise=serializers.ValidationError
+            )
+
+        if airplane and departure_time and arrival_time:
+            Flight.validate_airplane_availability(
+                airplane=airplane,
+                arrival_time=arrival_time,
+                departure_time=departure_time,
+                status=status,
+                flight_id=flight_id,
+                error_to_raise=serializers.ValidationError
+            )
+
+        if crew_members is not None and departure_time and arrival_time:
+            Flight.validate_crew_availability(
+                crew_members=crew_members,
+                arrival_time=arrival_time,
+                departure_time=departure_time,
+                status=status,
+                flight_id=flight_id,
+                error_to_raise=serializers.ValidationError
+            )
+
+        return attrs
 
 
 class FlightListSerializer(FlightSerializer):
