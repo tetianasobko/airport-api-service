@@ -1,5 +1,7 @@
 from rest_framework import viewsets
+from rest_framework.permissions import IsAuthenticated
 
+from airport_service.permissions import IsAdminOrOwner
 from bookings.models import Order
 from bookings.pagination import OrderPagination
 from bookings.serializers import (
@@ -13,9 +15,10 @@ class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
     pagination_class = OrderPagination
+    permission_classes = [IsAuthenticated, IsAdminOrOwner]
 
     def get_queryset(self):
-        queryset = self.queryset.filter(user=self.request.user)
+        queryset = self.queryset
 
         if self.action in ["list", "retrieve"]:
             queryset = queryset.prefetch_related(
@@ -23,6 +26,9 @@ class OrderViewSet(viewsets.ModelViewSet):
                 "tickets__flight__route__destination",
                 "tickets__seat_class"
             )
+
+        if not self.request.user.is_staff:
+            queryset = self.queryset.filter(user=self.request.user)
 
         return queryset
 
