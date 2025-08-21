@@ -1,4 +1,6 @@
 from datetime import timedelta
+from decimal import Decimal
+
 from django.utils import timezone
 import holidays
 
@@ -12,7 +14,7 @@ class TicketPricingService:
         self.flight = flight
         self.seat_class = seat_class
 
-    def calculate_price(self, with_luggage: bool = False) -> float:
+    def calculate_price(self, with_luggage: bool = False) -> Decimal:
         base_fare = self._get_base_fare()
         seat_class_multiplier = self._get_seat_class_multiplier()
         time_multiplier = self._get_time_multiplier()
@@ -31,7 +33,8 @@ class TicketPricingService:
         if with_luggage:
             price = price + luggage_price
 
-        return round(price, 2)
+        price = round(price, 2)
+        return Decimal(str(price))
 
     def _get_holiday_multiplier(self) -> float:
         holiday_window_days = 7
