@@ -240,7 +240,7 @@ class Flight(models.Model):
     departure_time = models.DateTimeField()
     arrival_time = models.DateTimeField()
     status = models.CharField(
-        max_length=20, choices=FLIGHT_STATUS_CHOICES, default="Scheduled"
+        max_length=20, choices=FLIGHT_STATUS_CHOICES, default="scheduled"
     )
     crew = models.ManyToManyField(Crew, related_name="flights")
 
