@@ -75,6 +75,10 @@ class TicketSeatSerializer(serializers.ModelSerializer):
         read_only_fields = ("id", "row", "seat", "seat_class")
 
 
+class TicketReturnSerializer(serializers.Serializer):
+    ticket_id = serializers.IntegerField()
+
+
 class OrderSerializer(serializers.ModelSerializer):
     tickets = TicketSerializer(many=True, read_only=False, allow_empty=False)
 
