@@ -1,5 +1,6 @@
 from django.db.models import Count, F, Sum
 from django.db.models.functions import Length
+from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework import viewsets
 
 from flights.models import (
@@ -208,7 +209,6 @@ class FlightViewSet(viewsets.ModelViewSet):
             if route_id:
                 queryset = queryset.filter(route_id=route_id)
 
-            # Filter by source airport
             source = self.request.query_params.get("source")
             if source:
                 queryset = queryset.filter(route__source_id=source)
@@ -237,3 +237,42 @@ class FlightViewSet(viewsets.ModelViewSet):
         elif self.action == "retrieve":
             return FlightDetailSerializer
         return FlightSerializer
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                "airline",
+                type=int,
+                description="Filter by airline id",
+            ),
+            OpenApiParameter(
+                "route",
+                type=int,
+                description="Filter by route id",
+            ),
+            OpenApiParameter(
+                "source",
+                type=int,
+                description="Filter by source airport id",
+            ),
+            OpenApiParameter(
+                "destination",
+                type=int,
+                description="Filter by destination airport id",
+            ),
+            OpenApiParameter(
+                "departure_date",
+                type=str,
+                description="Filter by departure date "
+                            "(ex. ?departure_date=2024-07-15)",
+            ),
+            OpenApiParameter(
+                "arrival_date",
+                type=str,
+                description="Filter by arrival date "
+                            "(ex. ?arrival_date=2024-07-16)",
+            ),
+        ]
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)

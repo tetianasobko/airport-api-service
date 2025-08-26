@@ -1,4 +1,5 @@
 from django.db import transaction
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 from rest_framework.relations import SlugRelatedField
 
@@ -67,6 +68,7 @@ class RouteListSerializer(serializers.ModelSerializer):
     source_display = serializers.SerializerMethodField()
     destination_display = serializers.SerializerMethodField()
 
+    @extend_schema_field(serializers.CharField)
     def get_source_display(self, obj):
         airport = obj.source
         return (
@@ -74,6 +76,7 @@ class RouteListSerializer(serializers.ModelSerializer):
             f"{airport.city.country.name}"
         )
 
+    @extend_schema_field(serializers.CharField)
     def get_destination_display(self, obj):
         airport = obj.destination
         return (
@@ -129,6 +132,8 @@ class TicketSeatClassSerializer(serializers.ModelSerializer):
 
 
 class CompartmentSerializer(serializers.ModelSerializer):
+    capacity = serializers.IntegerField(read_only=True)
+
     class Meta:
         model = Compartment
         fields = [
@@ -179,6 +184,7 @@ class AirplaneListSerializer(serializers.ModelSerializer):
 
 class AirplaneDetailSerializer(AirplaneListSerializer):
     compartments = CompartmentListSerializer(many=True, read_only=True)
+    total_seats = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Airplane
@@ -337,6 +343,7 @@ class FlightDetailSerializer(FlightListSerializer):
     crew = CrewListSerializer(many=True, read_only=True)
     taken_seats = serializers.SerializerMethodField()
 
+    @extend_schema_field(serializers.JSONField)
     def get_taken_seats(self, obj):
         from bookings.serializers import TicketSeatSerializer
         tickets = obj.tickets.all()
