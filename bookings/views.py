@@ -1,8 +1,11 @@
-from rest_framework import viewsets
+from django.db import transaction
+from rest_framework import viewsets, mixins, status
+from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
 from airport_service.permissions import IsAdminOrOwner
-from bookings.models import Order
+from bookings.models import Order, Ticket
 from bookings.pagination import OrderPagination
 from bookings.serializers import (
     OrderSerializer,
@@ -11,7 +14,12 @@ from bookings.serializers import (
 )
 
 
-class OrderViewSet(viewsets.ModelViewSet):
+class OrderViewSet(
+    mixins.ListModelMixin,
+    mixins.CreateModelMixin,
+    mixins.RetrieveModelMixin,
+    viewsets.GenericViewSet
+):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
     pagination_class = OrderPagination
@@ -41,3 +49,33 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+    @action(
+        detail=True,
+        methods=["post"],
+        url_path="return-ticket",
+        permission_classes=[IsAdminOrOwner]
+    )
+    def return_ticket(self, request, pk=None):
+        order = self.get_object()
+        ticket_id = request.data.get("ticket_id")
+
+        try:
+            with transaction.atomic():
+                ticket = Ticket.objects.get(id=ticket_id, order=order)
+                ticket.delete()
+        except Ticket.DoesNotExist:
+            return Response(
+                {"detail": "Ticket not found in this order."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            return Response(
+                {"detail": f"An error occurred: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+        return Response(
+            {"detail": "Ticket returned successfully."},
+            status=status.HTTP_204_NO_CONTENT
+        )
