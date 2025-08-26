@@ -1,4 +1,5 @@
 from django.db import transaction
+from drf_spectacular.utils import extend_schema
 from rest_framework import viewsets, mixins, status
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
@@ -10,7 +11,7 @@ from bookings.pagination import OrderPagination
 from bookings.serializers import (
     OrderSerializer,
     OrderListSerializer,
-    OrderDetailSerializer
+    OrderDetailSerializer, TicketReturnSerializer
 )
 
 
@@ -50,6 +51,7 @@ class OrderViewSet(
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
 
+    @extend_schema(request=TicketReturnSerializer)
     @action(
         detail=True,
         methods=["post"],
